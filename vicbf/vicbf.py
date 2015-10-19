@@ -66,7 +66,7 @@ class VICBF():
             raise ValueError("Key cannot be None")
         for i in range(self.hash_functions):
             # Compute the slot index and increment value
-            slot_index, increment = self._get_values(key, i)
+            slot_index, increment = self._calculate_slot_and_increment(key, i)
             # Perform the increment in the bloom filter
             try:
                 if self.BF[slot_index] + increment >= 2 ** self.m - 1:
@@ -81,7 +81,7 @@ class VICBF():
             raise ValueError("Key cannot be None")
         for i in range(self.hash_functions):
             # Compute the slot and increment values
-            slot_index, decrement = self._get_values(key, i)
+            slot_index, decrement = self._calculate_slot_and_increment(key, i)
             # Perform the decrement in the bloom filter
             try:
                 if self.BF[slot_index] == 2 ** self.m - 1:
@@ -111,7 +111,7 @@ class VICBF():
             raise ValueError("Key cannot be None")
         for i in range(self.hash_functions):
             # Compute the slot and increment values
-            slot_index, decrement = self._get_values(key, i)
+            slot_index, decrement = self._calculate_slot_and_increment(key, i)
             # Perform the decrement in the bloom filter
             try:
                 decr_value = self.BF[slot_index] - decrement
@@ -137,10 +137,7 @@ class VICBF():
         # be expected in a bloom filter.
         return True
 
-    def serialize(self):
-        pass
-
-    def _get_values(self, key, i):
+    def _calculate_slot_and_increment(self, key, i):
         # Get a sha1 hash of the key, combined with a running integer to
         # arrive at hash_functions different hash functions
         h = hashlib.sha1(str(key) + str(i)).hexdigest()
