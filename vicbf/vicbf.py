@@ -153,3 +153,6 @@ class VICBF():
         increment = self.L + dl_index
         # Return the values
         return (slot_index, increment)
+
+    def __contains__(self, key):
+        return self.query(key)
