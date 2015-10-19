@@ -21,11 +21,6 @@ efficient VICBF implementation, build your own :)
 import hashlib
 
 
-class VICBFError(Exception):
-    def __init__(self, message):
-        self.message = message
-
-
 class VICBF():
     """A basic VICBF implementation"""
 
@@ -47,14 +42,14 @@ class VICBF():
     """
     def __init__(self, slots, expected_entries, hash_functions, vibase=4):
         # TODO See if I can change the parameter to state a desired FPR
-        if hash_functions < 1:
-            raise VICBFError("hash_functions must be >=1")
+        if slots < 1:
+            raise ValueError("slots must be >=1")
         if expected_entries < 1:
-            raise VICBFError("expected_entries must be >=1")
+            raise ValueError("expected_entries must be >=1")
         if hash_functions < 1:
-            raise VICBFError("hash_functions must be >=1")
+            raise ValueError("hash_functions must be >=1")
         if vibase not in (2, 4, 8, 16):
-            raise VICBFError("vibase must be one of 2, 4, 8, 16")
+            raise ValueError("vibase must be one of 2, 4, 8, 16")
         self.BF = {}
         self.slots = slots
         self.expected_entries = expected_entries
@@ -68,7 +63,7 @@ class VICBF():
         key -- the key to insert."""
     def insert(self, key):
         if key is None:
-            raise VICBFError("Key cannot be None")
+            raise ValueError("Key cannot be None")
         for i in range(self.hash_functions):
             # Compute the slot index and increment value
             slot_index, increment = self._get_values(key, i)
@@ -83,7 +78,7 @@ class VICBF():
 
     def remove(self, key):
         if key is None:
-            raise VICBFError("Key cannot be None")
+            raise ValueError("Key cannot be None")
         for i in range(self.hash_functions):
             # Compute the slot and increment values
             slot_index, decrement = self._get_values(key, i)
@@ -97,7 +92,7 @@ class VICBF():
                 elif self.BF[slot_index] - decrement < 0:
                     # After the decrement, the counter would be negative.
                     # This should be impossible and indicates incorrect usage.
-                    raise VICBFError("Trying to remove entry not in VICBF")
+                    raise ValueError("Trying to remove entry not in VICBF")
                 elif self.BF[slot_index] - decrement == 0:
                     # After the decrement, the counter is zero. Remove the
                     # entry from the hashtable to save space
@@ -109,11 +104,11 @@ class VICBF():
             except KeyError:
                 # A KeyError should not occur if the item is in the VICBF, so
                 # this indicates incorrect usage. Raise an exception
-                raise VICBFError("Trying to remove entry not in VICBF")
+                raise ValueError("Trying to remove entry not in VICBF")
 
     def query(self, key):
         if key is None:
-            raise VICBFError("Key cannot be None")
+            raise ValueError("Key cannot be None")
         for i in range(self.hash_functions):
             # Compute the slot and increment values
             slot_index, decrement = self._get_values(key, i)
