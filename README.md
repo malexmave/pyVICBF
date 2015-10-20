@@ -8,3 +8,5 @@ The VI-CBF is an improvement over the regular CBF, as it provides a lower False 
 For more details, check the [original paper](http://www.cs.technion.ac.il/~ykanizo/papers/tr11-05_variable.pdf).
 
 This code is built for readability, not efficiency. If you need an efficient implementation, build your own :).
+
+This implementation is designed to be compatible with its java counterpart, [libvicbf](https://github.com/malexmave/libvicbf).
