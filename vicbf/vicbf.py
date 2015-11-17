@@ -19,28 +19,29 @@ This implementation is built for readability, not efficiency. If you need an
 efficient VICBF implementation, build your own :)
 """
 import hashlib
+from math import factorial as fac
 
 
 class VICBF():
     """A basic VICBF implementation"""
 
-    """Counstructor for the VICBF.
-
-    Attributes:
-        slots -- The number of slots (counters) the bloom filter should use.
-        called "m" in the paper.
-
-        expected_entries -- The expected maximum number of entries the bloom
-        filter will contain at any one time. Called |S| = n in the paper.
-
-        hash_functions -- The number of hash functions to use. Called k in the
-        paper.
-
-        vibase -- The base for the variable-increment lookup table. Called L
-        in the paper. A good value seems to be 4 or 8, according to the paper.
-        Must be one of 2, 4, 8, 16.
-    """
     def __init__(self, slots, expected_entries, hash_functions, vibase=4):
+        """Counstructor for the VICBF.
+
+        Attributes:
+            slots -- The number of slots (counters) the bloom filter should use.
+            called "m" in the paper.
+
+            expected_entries -- The expected maximum number of entries the bloom
+            filter will contain at any one time. Called |S| = n in the paper.
+
+            hash_functions -- The number of hash functions to use. Called k in the
+            paper.
+
+            vibase -- The base for the variable-increment lookup table. Called L
+            in the paper. A good value seems to be 4 or 8, according to the paper.
+            Must be one of 2, 4, 8, 16.
+        """
         # TODO See if I can change the parameter to state a desired FPR
         if slots < 1:
             raise ValueError("slots must be >=1")
@@ -57,11 +58,12 @@ class VICBF():
         self.L = vibase
         self.m = 8  # Number of bits per counter
 
-    """Insert a value into the bloom filter
-
-    Arguments:
-        key -- the key to insert."""
     def insert(self, key):
+        """Insert a value into the bloom filter
+
+        Arguments:
+            key -- the key to insert.
+        """
         if key is None:
             raise ValueError("Key cannot be None")
         for i in range(self.hash_functions):
@@ -77,6 +79,11 @@ class VICBF():
                 self.BF[slot_index] = increment
 
     def remove(self, key):
+        """Remove a value from the bloom filter
+
+        Arguments:
+            key -- the key to remove.
+        """
         if key is None:
             raise ValueError("Key cannot be None")
         for i in range(self.hash_functions):
@@ -107,6 +114,14 @@ class VICBF():
                 raise ValueError("Trying to remove entry not in VICBF")
 
     def query(self, key):
+        """Query the bloom filter for a specific key
+
+        Arguments:
+            key -- The key that should be queried
+
+        Returns: True if the key may be in the bloom filter, False if it is
+            definitely NOT in the bloom filter.
+        """
         if key is None:
             raise ValueError("Key cannot be None")
         for i in range(self.hash_functions):
@@ -138,6 +153,7 @@ class VICBF():
         return True
 
     def _calculate_slot_and_increment(self, key, i):
+        """Helper function to calculate the slot and increment value"""
         # Get a sha1 hash of the key, combined with a running integer to
         # arrive at hash_functions different hash functions
         h = hashlib.sha1((str(key) + str(i)).encode('utf-8')).hexdigest()
@@ -154,5 +170,33 @@ class VICBF():
         # Return the values
         return (slot_index, increment)
 
+    def _calculate_FPR(self, slots, entries, hash_functions, vibase):
+        """Helper function to calculate the false positive rate"""
+        # Calculate the False Positive Rate of the bloom filter with given
+        # parameters
+        # Rename parameters to match variables used in the paper
+        m = float(slots)
+        n = float(entries)
+        k = float(hash_functions)
+        L = float(vibase)
+        # Implement FPR formula from the paper
+        fpr = pow(1.0 - pow(1.0 - 1.0 / m, n * k) - ((L - 1.0) / L) *
+                  self._binomial(n * k, 1.0) * (1.0 / m) *
+                  pow(1.0 - (1.0 / m), n * k - 1.0) - (((L - 1.0) * (L + 1)) /
+                  (6.0 * pow(L, 2.0))) * self._binomial(n * k, 2.0) *
+                  pow(1.0 / m, 2.0) * pow(1.0 - (1.0 / m), n * k - 2.0),
+                  k)
+        return fpr
+
+    def _binomial(self, x, y):
+        """Helper function to calculate the binomial coefficient"""
+        # Source: http://stackoverflow.com/a/26561091/1232833
+        try:
+            binom = fac(x) // fac(y) // fac(x - y)
+        except ValueError:
+            binom = 0
+        return binom
+
     def __contains__(self, key):
+        """Equivalent to query function, allows "x in y" syntax"""
         return self.query(key)

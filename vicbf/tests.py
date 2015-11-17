@@ -148,3 +148,17 @@ def test_remove_none():
         assert True
         return
     assert False
+
+
+def test_fpr():
+    # Test the FPR calculator with a few known-good values, calculated with
+    # WolframAlpha
+    v = VICBF(10000, 1000, 3)
+    fpr = v._calculate_FPR(10000, 1000, 3, 4)
+    assert abs(fpr - 0.00066503041161) <= 0.00000000000001
+    fpr = v._calculate_FPR(5000, 5000, 3, 4)
+    assert abs(fpr - 0.51818886904) <= 0.00000000001
+    fpr = v._calculate_FPR(5000, 5000, 3, 8)
+    assert abs(fpr - 0.47966585318) <= 0.00000000001
+    fpr = v._calculate_FPR(5000, 5000, 2, 4)
+    assert abs(fpr - 0.38364688995) <= 0.00000000001
