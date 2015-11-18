@@ -54,6 +54,7 @@ class VICBF():
         self.BF = {}
         self.slots = slots
         self.expected_entries = expected_entries
+        self.entries = 0
         self.hash_functions = hash_functions
         self.L = vibase
         self.m = 8  # Number of bits per counter
@@ -77,6 +78,7 @@ class VICBF():
                     self.BF[slot_index] += increment
             except KeyError:
                 self.BF[slot_index] = increment
+        self.entries += 1
 
     def remove(self, key):
         """Remove a value from the bloom filter
@@ -112,6 +114,7 @@ class VICBF():
                 # A KeyError should not occur if the item is in the VICBF, so
                 # this indicates incorrect usage. Raise an exception
                 raise ValueError("Trying to remove entry not in VICBF")
+        self.entries -= 1
 
     def query(self, key):
         """Query the bloom filter for a specific key
@@ -152,6 +155,30 @@ class VICBF():
         # be expected in a bloom filter.
         return True
 
+    def size(self):
+        """Return the number of entries in the bloom filter.
+
+        Note: This count is not always reliable, and may even get negative in
+        very rare cases: If certain counters encounter an overflow and are
+        fixed to their maximum value, keys mapping to these values can be
+        removed an arbitrary number of times, each time reducing the internal
+        entry count of the bloom filter. This means that the count can
+        conceivably fall below zero in very rare cases. If you have an external
+        way to verify that you will only remove keys that are in the bloom
+        filter, this should not be a problem. Otherwise, keep this in mind.
+        This also has implications for the FPR calculation.
+        """
+        return self.entries
+
+    def FPR(self):
+        """Return the current estimated FPR of the bloom filter.
+
+        Please read the comments on the size() function for an important
+        limitation of this function.
+        """
+        return self._calculate_FPR(self.slots, self.size(),
+                                   self.hash_functions, self.L)
+
     def _calculate_slot_and_increment(self, key, i):
         """Helper function to calculate the slot and increment value"""
         # Get a sha1 hash of the key, combined with a running integer to
@@ -176,15 +203,17 @@ class VICBF():
         # parameters
         # Rename parameters to match variables used in the paper
         m = float(slots)
-        n = float(entries)
+        n = float(max(entries, 0))
+        # Set the entry count to at least zero due to the problems described
+        # in the documentation of the size() function.
         k = float(hash_functions)
         L = float(vibase)
         # Implement FPR formula from the paper
         fpr = pow(1.0 - pow(1.0 - 1.0 / m, n * k) - ((L - 1.0) / L) *
-                  self._binomial(n * k, 1.0) * (1.0 / m) *
-                  pow(1.0 - (1.0 / m), n * k - 1.0) - (((L - 1.0) * (L + 1)) /
-                  (6.0 * pow(L, 2.0))) * self._binomial(n * k, 2.0) *
-                  pow(1.0 / m, 2.0) * pow(1.0 - (1.0 / m), n * k - 2.0),
+                  n * k * (1.0 / m) * pow(1.0 - (1.0 / m), n * k - 1.0) -
+                  (((L - 1.0) * (L + 1)) / (6.0 * pow(L, 2.0))) *
+                  self._binomial(n * k, 2.0) * pow(1.0 / m, 2.0) *
+                  pow(1.0 - (1.0 / m), n * k - 2.0),
                   k)
         return fpr
 
@@ -200,3 +229,17 @@ class VICBF():
     def __contains__(self, key):
         """Equivalent to query function, allows "x in y" syntax"""
         return self.query(key)
+
+    def __iadd__(self, key):
+        """Shorthand for insert function. Allows "cbf += key" syntax"""
+        self.insert(key)
+        return self
+
+    def __isub__(self, key):
+        """Shorthand for remove function. Allows "cbf -= key" syntax"""
+        self.remove(key)
+        return self
+
+    def __len__(self):
+        """Shorthand for size function. Allows len(x) syntax"""
+        return self.size()

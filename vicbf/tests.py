@@ -1,6 +1,6 @@
 """Test cases for the VICBF implementation.
 
-These test cases are run with "nosetest".
+These test cases are run with "nosetests".
 """
 
 from vicbf import VICBF
@@ -81,6 +81,12 @@ def test_insert_overflow():
     # the maximum when the overflow occured
     assert v.query(123)
 
+
+def test_insert_list_syntax():
+    v = VICBF(10000, 1000, 3)
+    v += 123
+    assert 123 in v
+
 """Query tests"""
 
 
@@ -120,6 +126,7 @@ def test_query_list_syntax():
     assert 123 in v
     assert 124 not in v
 
+
 """Removal tests"""
 
 
@@ -150,7 +157,19 @@ def test_remove_none():
     assert False
 
 
-def test_fpr():
+def test_remove_list_syntax():
+    v = VICBF(10000, 1000, 3)
+    v += 123
+    v += 124
+    v -= 123
+    assert 123 not in v
+    assert 124 in v
+
+
+"""Helper function tests"""
+
+
+def test_fpr_helper():
     # Test the FPR calculator with a few known-good values, calculated with
     # WolframAlpha
     v = VICBF(10000, 1000, 3)
@@ -162,3 +181,40 @@ def test_fpr():
     assert abs(fpr - 0.47966585318) <= 0.00000000001
     fpr = v._calculate_FPR(5000, 5000, 2, 4)
     assert abs(fpr - 0.38364688995) <= 0.00000000001
+
+
+def test_current_fpr():
+    v = VICBF(10000, 1000, 3)
+    for i in range(1000):
+        v += i
+    assert abs(v.FPR() - 0.00066503041161) <= 0.00000000000001
+
+
+def test_size():
+    v = VICBF(10000, 1000, 3)
+    v += 123
+    v += 124
+    assert v.size() == 2
+    v -= 124
+    v -= 123
+    assert v.size() == 0
+    try:
+        v -= 123
+    except Exception:
+        pass
+    assert v.size() == 0
+
+
+def test_len():
+    v = VICBF(10000, 1000, 3)
+    v += 123
+    v += 124
+    assert len(v) == 2
+    v -= 124
+    v -= 123
+    assert len(v) == 0
+    try:
+        v -= 123
+    except Exception:
+        pass
+    assert len(v) == 0
