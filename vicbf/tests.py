@@ -211,7 +211,7 @@ def test_len():
     assert len(v) == 0
 
 
-def test_serialization():
+def test_serialization_dumpall():
     v = VICBF(10000, 3)
     for i in range(5000):
         v += i
@@ -221,7 +221,7 @@ def test_serialization():
         assert i in v2
 
 
-def test_serialization2():
+def test_serialization_dumpselective():
     v = VICBF(10000, 3)
     v += 123
     v += 126
@@ -231,4 +231,15 @@ def test_serialization2():
     assert 126 in v2
     assert 124 not in v2
 
-test_serialization()
+
+def test_serialization_dumpall_bpc7():
+    v = VICBF(10000, 3, bpc=7)
+    for i in range(5000):
+        v += i
+    ser = v.serialize()
+    v2 = deserialize(ser)
+    for i in range(5000):
+        assert i in v2
+
+
+test_serialization_dumpall_bpc7()
