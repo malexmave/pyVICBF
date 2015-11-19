@@ -221,7 +221,8 @@ class VICBF():
                 print "generator"
                 fmt = "<" + str(self.slots) + "B"
                 generator = BFGenerator()
-                serialized.append(pack(fmt, *generator))
+                # serialized.append(pack(fmt, *generator))
+                serialized.append(bytearray(generator))
                 # for i in generator:
                 #     pass
             else:
