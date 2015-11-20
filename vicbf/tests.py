@@ -242,4 +242,22 @@ def test_serialization_dumpall_bpc7():
         assert i in v2
 
 
+def test_deletion_regression():
+    # This is a regression test for the deletion bug described in commit
+    # 85bef853ee5927deffc13d16e9a79be8a9756d6c. Basically, a deletion could
+    # leave the VICBF in an inconsistent state.
+    # The values were specifically chosen to map to the same first slot, but
+    # different second slots.
+    v = VICBF(10000, 3)
+    v += 106
+    v += 771
+    try:
+        v -= 132
+        assert False, "Illegal deletion allowed"
+    except ValueError:
+        pass
+    v -= 106
+    assert 771 in v
+
+
 test_serialization_dumpall_bpc7()
