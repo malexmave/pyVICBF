@@ -264,7 +264,7 @@ class VICBF():
         # - 32 bit slot count indicator
         # - 4 bit vibase indicator
         # - 4 bit counter size indicator
-        header = pack('uint:1, uint:3, uint:32, uint:32, uint:4, uint:4',
+        header = pack('uint:1, uint:7, uint:32, uint:32, uint:4, uint:4',
                       mode,
                       self.hash_functions,
                       self.slots,
@@ -371,4 +371,4 @@ def _parse_header(serialized):
 
     Returns the header as (mode, hash_functions, slots, size, vibase, bpc)
     """
-    return serialized.readlist('uint:1, uint:3, uint:32, uint:32, uint:4, uint:4')
+    return serialized.readlist('uint:1, uint:7, uint:32, uint:32, uint:4, uint:4')
