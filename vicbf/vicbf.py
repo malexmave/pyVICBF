@@ -215,31 +215,21 @@ class VICBF():
             # Get the header of the serialized data
             serialized = self._build_header(self.MODE_DUMP_ALL)
             # Determine the format it will be serialized in
-            # if self.bpc == 8:
-            #     def lookup(key):
-            #         try:
-            #             return self.BF[key]
-            #         except:
-            #             return 0
-            #     print "efficient"
-            #     fmt = "<" + str(self.slots) + "B"
-            #     args = [lookup(key) for key in range(self.slots)]
-            #     serialized.append(pack(fmt, *args))
             if self.bpc == 8:
+                # We are using 8-bit counters. This means that we can serialize
+                # the counters as 8-bit unsigned integers, which is much more
+                # efficient than the alternative below.
                 def BFGenerator():
                     for i in range(self.slots):
                         try:
                             yield self.BF[i]
                         except KeyError:
                             yield 0
-                print "generator"
-                fmt = "<" + str(self.slots) + "B"
                 generator = BFGenerator()
-                # serialized.append(pack(fmt, *generator))
                 serialized.append(bytearray(generator))
-                # for i in generator:
-                #     pass
             else:
+                # We are not using 8-bit counters - use the slow method to
+                # serialize the data
                 fmt = 'uint:' + str(self.bpc)
                 # Start serializing
                 for slot in range(self.slots):
@@ -352,9 +342,7 @@ class VICBF():
 def deserialize(serialized):
     mode, hash_functions, slots, size, vibase, bpc = _parse_header(serialized)
     deser = VICBF(slots, hash_functions, vibase=vibase, bpc=bpc)
-    print deser.size()
     deser.entries = size
-    print deser.size()
     if mode == VICBF.MODE_DUMP_ALL:
         # The rest of the serialized data contains counter values of bpc bits,
         # in order from slot 0 to slot slots-1
