@@ -58,7 +58,7 @@ class VICBF():
         # Number of bits per counter
         self.bpc = bpc
         # Number of bits per counter index - will be used during serialization
-        self.bpi = ceil(log(self.slots, 2))
+        self.bpi = ceil(log(self.slots, 2) / 8) * 8
 
     def insert(self, key):
         """Insert a value into the bloom filter
